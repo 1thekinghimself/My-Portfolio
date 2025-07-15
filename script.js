@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // ========== General Setup ==========
   // Set current year in footer
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // Mobile navigation toggle
+  // ========== Mobile Navigation ==========
   const hamburger = document.querySelector('.hamburger');
   const navLinks = document.querySelector('.nav-links');
 
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Smooth scrolling for anchor links
+  // ========== Smooth Scrolling ==========
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
       e.preventDefault();
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Navbar scroll effect
+  // ========== Navbar Scroll Effect ==========
   const navbar = document.querySelector('.navbar');
   window.addEventListener('scroll', function() {
     if (window.scrollY > 100) {
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Animate skill bars on scroll
+  // ========== Animate Skill Bars ==========
   const skillBars = document.querySelectorAll('.skill-level');
   const skillsSection = document.getElementById('skills');
 
@@ -61,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Intersection Observer for skills section
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -75,31 +75,107 @@ document.addEventListener('DOMContentLoaded', function() {
     observer.observe(skillsSection);
   }
 
-  // Form submission
+  // ========== Contact Form with Formspree ==========
   const contactForm = document.getElementById('contactForm');
   if (contactForm) {
-    contactForm.addEventListener('submit', function(e) {
+    const formStatus = document.getElementById('formStatus');
+    
+    contactForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      // Get form values
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const subject = document.getElementById('subject').value;
-      const message = document.getElementById('message').value;
+      const submitBtn = contactForm.querySelector('button[type="submit"]');
       
-      // Here you would typically send the form data to a server
-      console.log({ name, email, subject, message });
-      
-      // Show success message
-      alert('Thank you for your message! I will get back to you soon.');
-      contactForm.reset();
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+      formStatus.textContent = '';
+      formStatus.className = 'form-status';
+
+      try {
+        const formData = new FormData(contactForm);
+        
+        // Send to Formspree
+        const response = await fetch('https://formspree.io/f/xanbyegb', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          // Success message
+          formStatus.textContent = 'Message sent successfully! I will get back to you soon.';
+          formStatus.className = 'form-status success';
+          contactForm.reset();
+          
+          // Redirect after 3 seconds (if _next is specified)
+          const nextPage = contactForm.querySelector('input[name="_next"]')?.value;
+          if (nextPage) {
+            setTimeout(() => {
+              window.location.href = nextPage;
+            }, 3000);
+          }
+        } else {
+          throw new Error('Form submission failed');
+        }
+      } catch (error) {
+        // Error message
+        formStatus.textContent = 'Failed to send message. Please try again later or email me directly at 1stmking@gmail.com';
+        formStatus.className = 'form-status error';
+        console.error('Form submission error:', error);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Send Message';
+      }
     });
   }
 
-  // Initialize animations
-  AOS.init({
-    duration: 800,
-    easing: 'ease-in-out',
-    once: true
+  // ========== Back to Top Button ==========
+  const backToTop = document.querySelector('.back-to-top');
+  if (backToTop) {
+    backToTop.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
+
+  // ========== Project Image Modal ==========
+  document.querySelectorAll('.project-links a[href$=".png"], .project-links a[href$=".jpg"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const imgSrc = this.getAttribute('href');
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <span class="close-modal">&times;</span>
+          <img src="${imgSrc}" alt="Project Design">
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.remove();
+      });
+      
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+    });
   });
+
+  // Initialize animations (if using AOS)
+  if (typeof AOS !== 'undefined') {
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+    });
+  }
 });
